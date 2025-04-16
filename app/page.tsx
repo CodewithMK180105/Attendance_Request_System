@@ -57,7 +57,7 @@ export default function Home() {
                 </Link>
                 <Link href="#features">
                   <Button size="lg" variant="outline">
-                    Learn More
+                    Create Class
                   </Button>
                 </Link>
               </motion.div>
