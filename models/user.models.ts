@@ -5,37 +5,45 @@ type UserRole = "hod" | "student" | "professor";
 
 // Define the User interface
 interface User extends Document {
-  id: string;
   name: string;
   email: string;
+  password: string;
+  rollNo?: string;              // For students
+  userId?: string;              // For students
+  division?: string;               // For students
+  department: string;
+  college: string;
   contactNumber: string;
   gender?: "Male" | "Female" | "Other" | "Prefer not to say";
   profilePicture?: string;
-  role: UserRole;
-  department: string;
-  college: string;
-  specialization?: string;  // For professors
-  rollNo?: string;  // For students
-  studentId?: string;  // For students
-  class?: string;  // For students
+  role: "hod" | "student" | "professor";
+  studentCode?: string;         // For students
+  professorCode?: string;       // For professors
+  createdAt?: Date;             // Automatically added by timestamps
+  updatedAt?: Date;             // Automatically added by timestamps
 }
+
 
 // Create the user schema
 const userSchema: Schema = new Schema(
   {
-    id: { type: String, required: true, unique: true },
     name: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
+    email: { type: String, required: true, match:[/.+\@.+\..+/, "Please enter a valid email address"], unique: true },
+    password: {
+      type: String,
+      required: [true, "Password is Required"],
+    },
+    rollNo: { type: String },  // Only for students
+    userId: { type: String },  // Only for students
+    division: { type: String },  // Only for students
+    department: { type: String, required: true },
+    college: { type: String, required: true },
     contactNumber: { type: String, required: true },
     gender: { type: String, enum: ["Male", "Female", "Other", "Prefer not to say"], default: "Prefer not to say" },
     profilePicture: { type: String, default: "" },
     role: { type: String, required: true, enum: ["hod", "student", "professor"] },
-    department: { type: String, required: true },
-    college: { type: String, required: true },
-    specialization: { type: String },  // Only for professors
-    rollNo: { type: String },  // Only for students
-    studentId: { type: String },  // Only for students
-    class: { type: String },  // Only for students
+    studentCode: { type: String },
+    professorCode: { type: String },
   },
   {
     timestamps: true,  // Automatically adds createdAt and updatedAt fields
@@ -43,6 +51,6 @@ const userSchema: Schema = new Schema(
 );
 
 // Create and export the model
-const UserModel = mongoose.model<User>('User', userSchema);
+const UserModel = (mongoose.models.User as mongoose.Model<User>) || mongoose.model<User>('User', userSchema);
 
 export default UserModel;

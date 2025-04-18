@@ -50,6 +50,6 @@ const attendanceRequestSchema: Schema = new Schema(
 );
 
 // Create and export the model
-const AttendanceRequestModel = mongoose.model<AttendanceRequest>('AttendanceRequest', attendanceRequestSchema);
+const AttendanceRequestModel =(mongoose.models.AttendanceRequest as mongoose.Model<AttendanceRequest>) || mongoose.model<AttendanceRequest>('AttendanceRequest', attendanceRequestSchema);
 
 export default AttendanceRequestModel;

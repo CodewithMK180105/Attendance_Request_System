@@ -64,20 +64,28 @@ export default function SignupPage() {
     }
   }, [code])
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
-
-    setTimeout(() => {
-      setIsSubmitting(false)
-      toast({
-        title: "Account created successfully",
-        description: `You are now registered as a ${role}.`,
-      })
-
-      router.push("/login")
-    }, 1500)
+  
+    const formData = new FormData(e.currentTarget as HTMLFormElement)
+  
+    const res = await fetch('/api/signup', {
+      method: 'POST',
+      body: formData,
+    })
+  
+    const data = await res.json()
+    if (res.ok) {
+      toast({ title: 'Success', description: data.message })
+      router.push('/login')
+    } else {
+      toast({ title: 'Error', description: data.error || 'Something went wrong' })
+    }
+  
+    setIsSubmitting(false)
   }
+  
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
