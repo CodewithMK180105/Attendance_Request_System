@@ -1,41 +1,113 @@
-"use client"
+"use client";
 
-import type React from "react"
-
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { motion } from "framer-motion"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { ThemeToggle } from "@/components/theme-toggle"
-import { useToast } from "@/hooks/use-toast"
+import type React from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { useToast } from "@/hooks/use-toast";
+import axios from "axios";
+import { Loader2 } from "lucide-react";
 
 export default function LoginPage() {
-  const router = useRouter()
-  const { toast } = useToast()
-  const [role, setRole] = useState("student")
+  const router = useRouter();
+  const { toast } = useToast();
+  const [role, setRole] = useState("student");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [redirectPath, setRedirectPath] = useState("");
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault()
-
-    toast({
-      title: "Logged in successfully",
-      description: `You are now logged in as a ${role}.`,
-    })
-
-    // Redirect based on role
-    if (role === "student") {
-      router.push("/dashboard/student")
-    } else if (role === "hod") {
-      router.push("/dashboard/hod")
-    } else if (role === "professor") {
-      router.push("/dashboard/professor")
+  // Handle redirect after successful login
+  useEffect(() => {
+    if (redirectPath) {
+      console.log("Frontend: Attempting redirect to:", redirectPath);
+      try {
+        router.push(redirectPath);
+        router.refresh();
+        console.log("Frontend: router.push executed for:", redirectPath);
+        // Fallback hard redirect
+        setTimeout(() => {
+          console.log("Frontend: Executing fallback redirect to:", redirectPath);
+          window.location.href = redirectPath;
+        }, 1000);
+      } catch (error) {
+        console.error("Frontend: Redirect error:", error);
+        toast({
+          title: "Redirect Error",
+          description: "Failed to redirect to dashboard.",
+          variant: "destructive",
+        });
+      }
     }
-  }
+  }, [redirectPath, router]);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isLoading) {
+      console.log("Frontend: Login attempt blocked: already loading");
+      return;
+    }
+    setIsLoading(true);
+
+    try {
+      console.log("Frontend: Sending login request:", { email, role });
+      const response = await axios.post(
+        "/api/sign-in",
+        { email, password, role },
+        { withCredentials: true }
+      );
+
+      console.log("Frontend: API response:", response.data);
+      console.log("Frontend: Response headers:", response.headers);
+
+      if (response.data.success) {
+        toast({
+          title: "Logged in successfully",
+          description: `You are now logged in as a ${role}.`,
+        });
+
+        // Set redirect path based on role
+        let path = "";
+        if (role === "student") {
+          path = "/dashboard/student";
+        } else if (role === "hod") {
+          path = "/dashboard/hod";
+        } else if (role === "professor") {
+          path = "/dashboard/professor";
+        } else {
+          throw new Error("Invalid role selected");
+        }
+
+        console.log("Frontend: Setting redirect path:", path);
+        setRedirectPath(path);
+      } else {
+        console.warn("Frontend: Login failed:", response.data.message);
+        toast({
+          title: "Login failed",
+          description: response.data.message || "Unknown error occurred.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+      }
+    } catch (error: any) {
+      // console.error("Frontend: Login error details:", error.response?.data);
+      // console.error("Frontend: Error response headers:", error.response?.headers);
+      toast({
+        title: "Error",
+        description:
+          error.response?.data?.message || "An error occurred during login.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -64,11 +136,26 @@ export default function LoginPage() {
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email">Email</Label>
-                  <Input id="email" type="email" placeholder="your.email@example.com" required />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="your.email@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    disabled={isLoading}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
-                  <Input id="password" type="password" required />
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    disabled={isLoading}
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label>Select Role</Label>
@@ -77,6 +164,7 @@ export default function LoginPage() {
                     value={role}
                     onValueChange={setRole}
                     className="flex flex-col space-y-1"
+                    disabled={isLoading}
                   >
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="student" id="student" />
@@ -92,14 +180,20 @@ export default function LoginPage() {
                     </div>
                   </RadioGroup>
                 </div>
-                <Button type="submit" className="w-full">
-                  Login
+                <Button className="w-full" type="submit" disabled={isLoading}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Please Wait...
+                    </>
+                  ) : (
+                    "SignIn"
+                  )}
                 </Button>
               </form>
             </CardContent>
             <CardFooter className="flex justify-center">
               <p className="text-sm text-muted-foreground">
-                Don&apos;t have an account?{" "}
+                Don't have an account?{" "}
                 <Link href="/signup" className="text-primary hover:underline">
                   Sign up
                 </Link>
@@ -109,5 +203,5 @@ export default function LoginPage() {
         </motion.div>
       </main>
     </div>
-  )
+  );
 }

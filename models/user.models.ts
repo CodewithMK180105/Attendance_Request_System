@@ -1,56 +1,70 @@
-import mongoose, { Document, Schema } from 'mongoose';
+// models/user.models.ts
+import mongoose, { Document, Schema, Model } from 'mongoose';
 
-// Define the possible roles a user can have
-type UserRole = "hod" | "student" | "professor";
+// Define the possible roles
+type UserRole = 'hod' | 'student' | 'professor';
 
 // Define the User interface
-interface User extends Document {
+export interface IUser extends Document {
   name: string;
   email: string;
   password: string;
-  rollNo?: string;              // For students
-  userId?: string;              // For students
-  division?: string;               // For students
+  rollNo?: string;
+  userId?: string;
+  division?: string;
   department: string;
   college: string;
   contactNumber: string;
-  gender?: "Male" | "Female" | "Other" | "Prefer not to say";
+  gender?: 'Male' | 'Female' | 'Other' | 'Prefer not to say';
   profilePicture?: string;
-  role: "hod" | "student" | "professor";
-  studentCode?: string;         // For students
-  professorCode?: string;       // For professors
-  createdAt?: Date;             // Automatically added by timestamps
-  updatedAt?: Date;             // Automatically added by timestamps
+  role: UserRole;
+  studentCode?: string;
+  professorCode?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
-
 // Create the user schema
-const userSchema: Schema = new Schema(
+const userSchema: Schema<IUser> = new Schema(
   {
     name: { type: String, required: true },
-    email: { type: String, required: true, match:[/.+\@.+\..+/, "Please enter a valid email address"], unique: true },
+    email: {
+      type: String,
+      required: true,
+      match: [/.+\@.+\..+/, 'Please enter a valid email address'],
+      unique: true,
+    },
     password: {
       type: String,
-      required: [true, "Password is Required"],
+      required: [true, 'Password is Required'],
     },
-    rollNo: { type: String },  // Only for students
-    userId: { type: String },  // Only for students
-    division: { type: String },  // Only for students
+    rollNo: { type: String },
+    userId: { type: String },
+    division: { type: String },
     department: { type: String, required: true },
     college: { type: String, required: true },
     contactNumber: { type: String, required: true },
-    gender: { type: String, enum: ["Male", "Female", "Other", "Prefer not to say"], default: "Prefer not to say" },
-    profilePicture: { type: String, default: "" },
-    role: { type: String, required: true, enum: ["hod", "student", "professor"] },
+    gender: {
+      type: String,
+      enum: ['Male', 'Female', 'Other', 'Prefer not to say'],
+      default: 'Prefer not to say',
+    },
+    profilePicture: { type: String, default: '' },
+    role: {
+      type: String,
+      required: true,
+      enum: ['hod', 'student', 'professor'],
+    },
     studentCode: { type: String },
     professorCode: { type: String },
   },
   {
-    timestamps: true,  // Automatically adds createdAt and updatedAt fields
+    timestamps: true,
   }
 );
 
 // Create and export the model
-const UserModel = (mongoose.models.User as mongoose.Model<User>) || mongoose.model<User>('User', userSchema);
+const UserModel: Model<IUser> =
+  mongoose.models.User || mongoose.model<IUser>('User', userSchema);
 
 export default UserModel;
