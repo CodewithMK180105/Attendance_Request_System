@@ -1,11 +1,11 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
+import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
+import axios from "axios"
 import { motion } from "framer-motion"
-import { CalendarIcon, Upload } from "lucide-react"
+import { CalendarIcon } from "lucide-react"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -13,40 +13,73 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
-import { users } from "@/lib/data"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { cn } from "@/lib/utils"
 import { format } from "date-fns"
 import { TimeField } from "@/components/ui/time-field"
+import { useUser } from "@/context/UserContext"
 
 export default function NewRequestPage() {
   const router = useRouter()
   const { toast } = useToast()
+  const { user, loading } = useUser()
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [date, setDate] = useState<Date>()
   const [time, setTime] = useState<string>("10:00")
+  const eventNameRef = useRef<HTMLInputElement>(null)
+  const eventLocationRef = useRef<HTMLInputElement>(null)
+  const subjectRef = useRef<HTMLInputElement>(null)
+  const professorRef = useRef<HTMLInputElement>(null)
+  const reasonRef = useRef<HTMLTextAreaElement>(null)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsSubmitting(false)
+    try {
+      const formData = {
+        name: user?.name || "",
+        rollNo: user?.rollNo || "",
+        division: user?.division || "",
+        studentId: user?.userId || user?.studentCode || "",
+        eventName: eventNameRef.current?.value || "",
+        eventLocation: eventLocationRef.current?.value || "",
+        eventDate: date ? format(date, "yyyy-MM-dd") : "",
+        lectureTime: time,
+        subject: subjectRef.current?.value || "",
+        professor: professorRef.current?.value || "",
+        reasonForAbsence: reasonRef.current?.value || "",
+      }
+
+      const response = await axios.post("/api/request-form", formData, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+
       toast({
         title: "Request submitted successfully",
-        description: "Your attendance request has been submitted and is pending approval.",
+        description: response.data.message || "Your attendance request has been submitted and is pending approval.",
       })
       router.push("/dashboard/student")
-    }, 1500)
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Failed to submit request",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0])
-    }
+  if (loading) {
+    return <div>Loading...</div>
+  }
+
+  if (!user || user.role !== "student") {
+    return <div>Access denied. Please log in as a student.</div>
   }
 
   return (
@@ -71,19 +104,19 @@ export default function NewRequestPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="name">Name</Label>
-                      <Input id="name" value={users.student.name} disabled />
+                      <Input id="name" value={user.name} disabled />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="rollNo">Roll Number</Label>
-                      <Input id="rollNo" value={users.student.rollNo} disabled />
+                      <Input id="rollNo" value={user.rollNo || ""} disabled />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="class">Class</Label>
-                      <Input id="class" value={users.student.class} disabled />
+                      <Label htmlFor="division">Division</Label>
+                      <Input id="division" value={user.division || ""} disabled />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="studentId">Student ID</Label>
-                      <Input id="studentId" value={users.student.studentId} disabled />
+                      <Label htmlFor="userId">Student ID</Label>
+                      <Input id="userId" value={user.userId || user.studentCode || ""} disabled />
                     </div>
                   </div>
                 </div>
@@ -94,11 +127,11 @@ export default function NewRequestPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="eventName">Event Name</Label>
-                      <Input id="eventName" placeholder="Enter event name" required />
+                      <Input id="eventName" placeholder="Enter event name" ref={eventNameRef} required />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="eventLocation">Event Location</Label>
-                      <Input id="eventLocation" placeholder="Enter event location" required />
+                      <Input id="eventLocation" placeholder="Enter event location" ref={eventLocationRef} required />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="eventDate">Event Date</Label>
@@ -133,11 +166,11 @@ export default function NewRequestPage() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="subject">Subject</Label>
-                      <Input id="subject" placeholder="Enter subject name" required />
+                      <Input id="subject" placeholder="Enter subject name" ref={subjectRef} required />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="professor">Professor</Label>
-                      <Input id="professor" placeholder="Enter professor name" required />
+                      <Input id="professor" placeholder="Enter professor name" ref={professorRef} required />
                     </div>
                   </div>
                   <div className="space-y-2">
@@ -146,32 +179,9 @@ export default function NewRequestPage() {
                       id="reason"
                       placeholder="Briefly explain why you need to attend this event"
                       rows={3}
+                      ref={reasonRef}
                       required
                     />
-                  </div>
-                </div>
-
-                {/* Supporting Document */}
-                <div className="space-y-4">
-                  <h3 className="text-lg font-medium">Supporting Document</h3>
-                  <div className="space-y-2">
-                    <Label htmlFor="document">Upload Document</Label>
-                    <div className="border rounded-md p-4">
-                      <div className="flex flex-col items-center justify-center gap-2">
-                        <Upload className="h-8 w-8 text-muted-foreground" />
-                        <p className="text-sm text-muted-foreground">Drag and drop your file here or click to browse</p>
-                        <Input id="document" type="file" className="hidden" onChange={handleFileChange} required />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => document.getElementById("document")?.click()}
-                        >
-                          Select File
-                        </Button>
-                        {selectedFile && <p className="text-sm mt-2">Selected: {selectedFile.name}</p>}
-                      </div>
-                    </div>
-                    <p className="text-xs text-muted-foreground">Accepted file types: PDF, JPG, PNG (Max size: 5MB)</p>
                   </div>
                 </div>
               </CardContent>

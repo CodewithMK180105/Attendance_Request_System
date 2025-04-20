@@ -63,9 +63,11 @@ export async function POST(req: NextRequest) {
     }
 
     const token = await generateToken({
+      id: user._id.toString(),
       email: user.email,
       role: user.role,
     });
+    
 
     console.log('API: Token generated for user:', { email, role });
 

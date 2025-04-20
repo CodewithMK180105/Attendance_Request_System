@@ -1,15 +1,14 @@
-"use client"
+"use client";
 
-import type React from "react"
-
-import { useState, useEffect } from "react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { motion } from "framer-motion"
-import { Bell, Calendar, ChevronDown, FileText, Home, LogOut, Menu, Settings, User } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { ThemeToggle } from "@/components/theme-toggle"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import type React from "react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { motion } from "framer-motion";
+import { Bell, Calendar, ChevronDown, FileText, Home, LogOut, Menu, Settings, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,26 +16,34 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
-import { cn } from "@/lib/utils"
+} from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { cn } from "@/lib/utils";
+import { useUser } from "@/context/UserContext";
 
 interface DashboardLayoutProps {
-  children: React.ReactNode
-  role: "student" | "hod" | "professor"
+  children: React.ReactNode;
+  role: "student" | "hod" | "professor";
 }
 
 export function DashboardLayout({ children, role }: DashboardLayoutProps) {
-  const pathname = usePathname()
-  const [isMounted, setIsMounted] = useState(false)
+  const { user, logout } = useUser();
+  const pathname = usePathname();
+  const router = useRouter();
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    setIsMounted(true)
-  }, [])
+    setIsMounted(true);
+  }, []);
 
   if (!isMounted) {
-    return null
+    return null;
   }
+
+  const handleLogout = async () => {
+    await logout();
+    router.push("/login");
+  };
 
   const navItems = [
     {
@@ -64,9 +71,9 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
       href: `/dashboard/${role}/settings`,
       icon: Settings,
     },
-  ]
+  ];
 
-  const roleTitle = role.charAt(0).toUpperCase() + role.slice(1)
+  const roleTitle = role.charAt(0).toUpperCase() + role.slice(1);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -125,35 +132,46 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center gap-2">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src="/placeholder.svg" alt="User" />
-                    <AvatarFallback>{roleTitle.charAt(0)}</AvatarFallback>
+                    <AvatarImage src={user?.profilePicture || "/placeholder.svg"} alt={user?.name || "User"} />
+                    <AvatarFallback>{user?.name?.charAt(0) || roleTitle.charAt(0)}</AvatarFallback>
                   </Avatar>
-                  <span className="hidden md:inline-block font-medium">{roleTitle} Account</span>
+                  <span className="hidden md:inline-block font-medium">
+                    {user ? user.name : `${roleTitle} Account`}
+                  </span>
                   <ChevronDown className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuLabel>{user ? user.name : "My Account"}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href={`/dashboard/${role}/profile`}>
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link href={`/dashboard/${role}/settings`}>
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Settings</span>
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href="/login">
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Logout</span>
-                  </Link>
-                </DropdownMenuItem>
+                {user ? (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link href={`/dashboard/${role}/profile`}>
+                        <User className="mr-2 h-4 w-4" />
+                        <span>Profile</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem asChild>
+                      <Link href={`/dashboard/${role}/settings`}>
+                        <Settings className="mr-2 h-4 w-4" />
+                        <span>Settings</span>
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={handleLogout}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Logout</span>
+                    </DropdownMenuItem>
+                  </>
+                ) : (
+                  <DropdownMenuItem asChild>
+                    <Link href="/login">
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Login</span>
+                    </Link>
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -195,5 +213,5 @@ export function DashboardLayout({ children, role }: DashboardLayoutProps) {
         </motion.main>
       </div>
     </div>
-  )
+  );
 }
