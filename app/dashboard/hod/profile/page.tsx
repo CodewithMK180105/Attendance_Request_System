@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { motion } from "framer-motion"
 import { DashboardLayout } from "@/components/dashboard-layout"
@@ -11,13 +10,26 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useToast } from "@/hooks/use-toast"
-import { users } from "@/lib/data"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Copy } from "lucide-react"
+import { useUser } from "@/context/UserContext"
 
 export default function HodProfilePage() {
+  const { user } = useUser() // Get user data from context
   const { toast } = useToast()
   const [isEditing, setIsEditing] = useState(false)
-  const [profileData, setProfileData] = useState(users.hod)
+  const [profileData, setProfileData] = useState(user || {
+    name: "",
+    email: "",
+    department: "",
+    college: "",
+    contactNumber: "",
+    gender: "",
+    profilePicture: "",
+    role: "hod",
+    studentCode: "",
+    professorCode: "",
+  })
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
 
   const handleSave = () => {
@@ -37,6 +49,21 @@ export default function HodProfilePage() {
     }
   }
 
+  const handleCopy = (text: string, type: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      toast({
+        title: `${type} Copied`,
+        description: `${type} has been copied to clipboard.`,
+      })
+    }).catch(() => {
+      toast({
+        title: "Copy Failed",
+        description: `Failed to copy ${type.toLowerCase()}.`,
+        variant: "destructive",
+      })
+    })
+  }
+
   return (
     <DashboardLayout role="hod">
       <div className="space-y-6">
@@ -45,8 +72,7 @@ export default function HodProfilePage() {
           <p className="text-muted-foreground">View and manage your profile information</p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* Profile Card */}
+        <div className="w-full lg:w-4/5 xl:w-3/5 mx-auto">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
             <Card>
               <CardHeader>
@@ -76,12 +102,42 @@ export default function HodProfilePage() {
                     <p>{profileData.department}</p>
                   </div>
                   <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">College</p>
+                    <p>{profileData.college}</p>
+                  </div>
+                  <div className="space-y-1">
                     <p className="text-sm font-medium text-muted-foreground">Contact Number</p>
                     <p>{profileData.contactNumber}</p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-sm font-medium text-muted-foreground">Gender</p>
                     <p>{profileData.gender}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">Student Code</p>
+                    <div className="flex items-center gap-8">
+                      <p>{profileData.studentCode}</p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleCopy(profileData.studentCode ?? "", "Student Code")}
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">Professor Code</p>
+                    <div className="flex items-center gap-8">
+                      <p>{profileData.professorCode}</p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleCopy(profileData.professorCode?? "", "Professor Code")}
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -93,8 +149,7 @@ export default function HodProfilePage() {
             </Card>
           </motion.div>
 
-          {/* Department Information */}
-          <motion.div
+          {/* <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.1 }}
@@ -108,7 +163,7 @@ export default function HodProfilePage() {
                 <div className="grid grid-cols-1 gap-4">
                   <div className="space-y-1">
                     <p className="text-sm font-medium text-muted-foreground">Department Name</p>
-                    <p>Computer Science</p>
+                    <p>{profileData.department}</p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-sm font-medium text-muted-foreground">Faculty Count</p>
@@ -125,7 +180,7 @@ export default function HodProfilePage() {
                 </div>
               </CardContent>
             </Card>
-          </motion.div>
+          </motion.div> */}
         </div>
 
         {/* Edit Profile Card */}
@@ -203,6 +258,14 @@ export default function HodProfilePage() {
                         <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="college">College</Label>
+                    <Input
+                      id="college"
+                      value={profileData.college}
+                      onChange={(e) => setProfileData({ ...profileData, college: e.target.value })}
+                    />
                   </div>
                 </div>
               </CardContent>

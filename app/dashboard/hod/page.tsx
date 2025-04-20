@@ -78,7 +78,7 @@ export default function HodDashboard() {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">HOD Dashboard</h1>
-          <p className="text-muted-foreground">Welcome back, Dr. Sarah! Manage attendance requests here.</p>
+          {/* <p className="text-muted-foreground">Welcome back, Dr. Sarah! Manage attendance requests here.</p> */}
         </div>
 
         {/* Stats Cards */}
