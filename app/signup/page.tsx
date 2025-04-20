@@ -1,12 +1,12 @@
-"use client"
+"use client";
 
-import type React from "react"
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { motion } from "framer-motion"
-import { Upload } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import type React from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { motion } from "framer-motion";
+import { Upload } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -14,90 +14,161 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select"
-import { ThemeToggle } from "@/components/theme-toggle"
-import { useToast } from "@/hooks/use-toast"
+} from "@/components/ui/select";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { useToast } from "@/hooks/use-toast";
+import axios from "axios";
 
 export default function SignupPage() {
-  const router = useRouter()
-  const { toast } = useToast()
-  const [role, setRole] = useState("student")
-  const [profilePicture, setProfilePicture] = useState<File | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const router = useRouter();
+  const { toast } = useToast();
+  const [role, setRole] = useState<"student" | "professor" | "hod">("student");
+  const [profilePicture, setProfilePicture] = useState<File | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [code, setCode] = useState("");
+  const [department, setDepartment] = useState("");
+  const [college, setCollege] = useState("");
+  const [isCodeValid, setIsCodeValid] = useState<boolean | null>(null);
 
-  const [code, setCode] = useState("")
-  const [department, setDepartment] = useState("")
-  const [college, setCollege] = useState("")
+  const isHOD = role === "hod";
+  const isCodeRequired = !isHOD;
 
-  const isHOD = role === "hod"
-  const isCodeRequired = !isHOD
-
+  // Validate invitation code dynamically
   useEffect(() => {
-    if (code.trim()) {
-      const fakeCodeMapping: {
-        [key: string]: { role: string; department: string; college: string };
-      } = {
-        PROF1234: { role: "professor", department: "Computer Science", college: "DJ Sanghvi" },
-        STUD5678: { role: "student", department: "Information Technology", college: "DJ Sanghvi" },
-      };
-      
-      const details = fakeCodeMapping[code.trim()];
-      if (details) {
-        setRole(details.role);
-        setDepartment(details.department);
-        setCollege(details.college);
-      } else {
-        setRole("student");
+    if (!isCodeRequired || !code.trim()) {
+      setDepartment("");
+      setCollege("");
+      setIsCodeValid(null);
+      return;
+    }
+
+    const validateCode = async () => {
+      try {
+        const response = await axios.get(`/api/get-class`, {
+          params: { code, role },
+        });
+        const data = response.data;
+        if (data.success) {
+          setDepartment(data.data.department || "");
+          setCollege(data.data.college || "");
+          setIsCodeValid(true);
+        } else {
+          setDepartment("");
+          setCollege("");
+          setIsCodeValid(false);
+          toast({ title: "Error", description: data.message, variant: "destructive" });
+        }
+      } catch (error) {
         setDepartment("");
         setCollege("");
-      }      
-    }
-  }, [code])
+        setIsCodeValid(false);
+        toast({ title: "Error", description: "Failed to validate code", variant: "destructive" });
+      }
+    };
 
-  const handleSignup = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsSubmitting(true)
-  
-    const formData = new FormData(e.currentTarget as HTMLFormElement)
-  
-    const res = await fetch('/api/signup', {
-      method: 'POST',
-      body: formData,
-    })
-  
-    const data = await res.json()
-    if (res.ok) {
-      toast({ title: 'Success', description: data.message })
-      router.push('/login')
-    } else {
-      toast({ title: 'Error', description: data.error || 'Something went wrong' })
+    const debounce = setTimeout(validateCode, 500);
+    return () => clearTimeout(debounce);
+  }, [code, role, isCodeRequired, toast]);
+
+  const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    const formData = new FormData(e.currentTarget);
+    const password = formData.get("password") as string;
+    const confirmPassword = formData.get("confirmPassword") as string;
+
+    // Validate password and confirmPassword
+    if (password !== confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Your Password and Confirm Password do not match",
+        variant: "destructive",
+      });
+      setIsSubmitting(false);
+      return;
     }
-  
-    setIsSubmitting(false)
-  }
-  
+
+    const payload: Record<string, any> = {
+      name: formData.get("name"),
+      email: formData.get("email"),
+      password,
+      role,
+      department,
+      college,
+      contactNumber: formData.get("contactNumber"),
+      gender: formData.get("gender") || undefined,
+    };
+
+    if (role === "student") {
+      payload.rollNo = formData.get("rollNo");
+      payload.userId = formData.get("studentId");
+      payload.division = formData.get("class");
+      payload.studentCode = code;
+    } else if (role === "professor") {
+      payload.professorCode = code;
+    }
+
+    if (profilePicture) {
+      payload.profilePicture = profilePicture.name; // Placeholder
+    }
+
+    try {
+      const response = await axios.post("/api/sign-up", payload);
+      const data = response.data;
+      if (data.success) {
+        toast({ title: "Success", description: data.message });
+        router.push("/login");
+      } else {
+        toast({ title: "Error", description: data.message, variant: "destructive" });
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || "Something went wrong",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setProfilePicture(e.target.files[0])
+      setProfilePicture(e.target.files[0]);
     }
-  }
+  };
+
+  // Handle role change with type safety
+  const handleRoleChange = (value: string) => {
+    if (["student", "professor", "hod"].includes(value)) {
+      setRole(value as "student" | "professor" | "hod");
+    } else {
+      toast({
+        title: "Error",
+        description: "Invalid role selected",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
       <header className="border-b">
         <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <Link href="/" className="text-xl font-bold">Attendance Portal</Link>
+          <Link href="/" className="text-xl font-bold">
+            Attendance Portal
+          </Link>
           <ThemeToggle />
         </div>
       </header>
@@ -116,30 +187,26 @@ export default function SignupPage() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSignup} className="space-y-6">
-
-                {/* Code input if not HOD */}
                 {isCodeRequired && (
                   <div className="space-y-2">
-                    <Label htmlFor="code">Enter Invitation Code</Label>
+                    <Label htmlFor="code">Enter Invitation Code (Ignore, if you are creating class as HOD)</Label>
                     <Input
                       id="code"
                       placeholder="e.g., PROF1234 or STUD5678"
                       value={code}
                       onChange={(e) => setCode(e.target.value)}
                       required
+                      className={isCodeValid === false ? "border-red-500" : ""}
                     />
+                    {isCodeValid === false && (
+                      <p className="text-sm text-red-500">Invalid invitation code</p>
+                    )}
                   </div>
                 )}
 
-                {/* Role Selection */}
                 <div className="space-y-2">
                   <Label>Select Role</Label>
-                  <RadioGroup
-                    defaultValue="student"
-                    value={role}
-                    onValueChange={setRole}
-                    className="flex flex-col space-y-1"
-                  >
+                  <RadioGroup value={role} onValueChange={handleRoleChange} className="flex flex-col space-y-1">
                     <div className="flex items-center space-x-2">
                       <RadioGroupItem value="student" id="student" />
                       <Label htmlFor="student">Student</Label>
@@ -155,53 +222,72 @@ export default function SignupPage() {
                   </RadioGroup>
                 </div>
 
-                {/* Basic Info */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-medium">Basic Information</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="name">Full Name</Label>
-                      <Input id="name" placeholder="Enter your full name" required />
+                      <Input id="name" name="name" placeholder="Enter your full name" required />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="email">Email</Label>
-                      <Input id="email" type="email" placeholder="your.email@example.com" required />
+                      <Input
+                        id="email"
+                        name="email"
+                        type="email"
+                        placeholder="your.email@example.com"
+                        required
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="password">Password</Label>
-                      <Input id="password" type="password" required />
+                      <Input id="password" name="password" type="password" required />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="confirmPassword">Confirm Password</Label>
-                      <Input id="confirmPassword" type="password" required />
+                      <Input id="confirmPassword" name="confirmPassword" type="password" required />
                     </div>
                   </div>
                 </div>
 
-                {/* Student Info */}
                 {role === "student" && (
                   <div className="space-y-4">
                     <h3 className="text-lg font-medium">Student Information</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="rollNo">Roll Number</Label>
-                        <Input id="rollNo" placeholder="e.g., CS2021001" required />
+                        <Input
+                          id="rollNo"
+                          name="rollNo"
+                          placeholder="e.g., I092"
+                          required
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="studentId">Student ID</Label>
-                        <Input id="studentId" placeholder="e.g., STU001" required />
+                        <Input
+                          id="studentId"
+                          name="studentId"
+                          placeholder="e.g., 60003220170"
+                          required
+                        />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="class">Class</Label>
-                        <Select required>
+                        <Select name="class" required>
                           <SelectTrigger id="class">
                             <SelectValue placeholder="Select class" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="CS-3A">CS-3A</SelectItem>
-                            <SelectItem value="CS-3B">CS-3B</SelectItem>
-                            <SelectItem value="CS-4A">CS-4A</SelectItem>
-                            <SelectItem value="CS-4B">CS-4B</SelectItem>
+                            <SelectItem value="SY-IT1">SY-IT1</SelectItem>
+                            <SelectItem value="SY-IT2">SY-IT2</SelectItem>
+                            <SelectItem value="SY-IT3">SY-IT3</SelectItem>
+                            <SelectItem value="TY-IT1">TY-IT1</SelectItem>
+                            <SelectItem value="TY-IT2">TY-IT2</SelectItem>
+                            <SelectItem value="TY-IT3">TY-IT3</SelectItem>
+                            <SelectItem value="BE-IT1">BE-IT1</SelectItem>
+                            <SelectItem value="BE-IT2">BE-IT2</SelectItem>
+                            <SelectItem value="BE-IT3">BE-IT1</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -209,7 +295,6 @@ export default function SignupPage() {
                   </div>
                 )}
 
-                {/* Additional Info */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-medium">Additional Information</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -217,10 +302,11 @@ export default function SignupPage() {
                       <Label htmlFor="department">Department</Label>
                       <Input
                         id="department"
+                        name="department"
                         value={department}
                         placeholder="Department"
                         onChange={(e) => setDepartment(e.target.value)}
-                        readOnly={role !== "hod"} // HOD can edit, others cannot
+                        readOnly={!isHOD}
                         required
                       />
                     </div>
@@ -228,20 +314,26 @@ export default function SignupPage() {
                       <Label htmlFor="college">College</Label>
                       <Input
                         id="college"
+                        name="college"
                         value={college}
                         placeholder="College Name"
                         onChange={(e) => setCollege(e.target.value)}
-                        readOnly={role !== "hod"} // HOD can edit, others cannot
+                        readOnly={!isHOD}
                         required
                       />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="contactNumber">Contact Number</Label>
-                      <Input id="contactNumber" placeholder="e.g., +91 9876543210" required />
+                      <Input
+                        id="contactNumber"
+                        name="contactNumber"
+                        placeholder="e.g., +91 9137102892"
+                        required
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="gender">Gender (Optional)</Label>
-                      <Select>
+                      <Select name="gender">
                         <SelectTrigger id="gender">
                           <SelectValue placeholder="Select gender" />
                         </SelectTrigger>
@@ -256,7 +348,6 @@ export default function SignupPage() {
                   </div>
                 </div>
 
-                {/* Profile Picture */}
                 <div className="space-y-4">
                   <h3 className="text-lg font-medium">Profile Picture (Optional)</h3>
                   <div className="border rounded-md p-4">
@@ -275,16 +366,12 @@ export default function SignupPage() {
                       <Button
                         type="button"
                         variant="outline"
-                        onClick={() =>
-                          document.getElementById("profilePicture")?.click()
-                        }
+                        onClick={() => document.getElementById("profilePicture")?.click()}
                       >
                         Select Image
                       </Button>
                       {profilePicture && (
-                        <p className="text-sm mt-2">
-                          Selected: {profilePicture.name}
-                        </p>
+                        <p className="text-sm mt-2">Selected: {profilePicture.name}</p>
                       )}
                     </div>
                   </div>
@@ -293,7 +380,11 @@ export default function SignupPage() {
                   </p>
                 </div>
 
-                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isSubmitting || (isCodeRequired && !isCodeValid)}
+                >
                   {isSubmitting ? "Creating Account..." : "Create Account"}
                 </Button>
               </form>
@@ -310,5 +401,5 @@ export default function SignupPage() {
         </motion.div>
       </main>
     </div>
-  )
+  );
 }
