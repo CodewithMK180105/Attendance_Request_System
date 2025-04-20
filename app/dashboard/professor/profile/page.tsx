@@ -1,8 +1,7 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { DashboardLayout } from "@/components/dashboard-layout"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -11,14 +10,36 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useToast } from "@/hooks/use-toast"
-import { users } from "@/lib/data"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Copy } from "lucide-react"
+import { useUser } from "@/context/UserContext"
 
 export default function ProfessorProfilePage() {
+  const { user } = useUser() // Get user data from context
   const { toast } = useToast()
   const [isEditing, setIsEditing] = useState(false)
-  const [profileData, setProfileData] = useState(users.professor)
+  const [profileData, setProfileData] = useState(user || {
+    name: "",
+    email: "",
+    department: "",
+    college: "",
+    contactNumber: "",
+    gender: "",
+    profilePicture: "",
+    role: "professor",
+    professorCode: "",
+  })
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [isLoading, setIsLoading] = useState(!user) // Show loading if user is not available initially
+
+  // Debugging: Log user data to check if it's being received
+  useEffect(() => {
+    console.log("User from context:", user)
+    if (user) {
+      setProfileData(user)
+      setIsLoading(false)
+    }
+  }, [user])
 
   const handleSave = () => {
     // Simulate API call
@@ -37,15 +58,41 @@ export default function ProfessorProfilePage() {
     }
   }
 
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      toast({
+        title: "Professor Code Copied",
+        description: "Professor code has been copied to clipboard.",
+      })
+    }).catch(() => {
+      toast({
+        title: "Copy Failed",
+        description: "Failed to copy professor code.",
+        variant: "destructive",
+      })
+    })
+  }
+
+  if (isLoading) {
+    return (
+      <DashboardLayout role="professor">
+        <div className="space-y-6 text-center">
+          <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
+          <p className="text-muted-foreground">Loading profile information...</p>
+        </div>
+      </DashboardLayout>
+    )
+  }
+
   return (
     <DashboardLayout role="professor">
       <div className="space-y-6">
-        <div>
+        <div className="text-center">
           <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
           <p className="text-muted-foreground">View and manage your profile information</p>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="w-full lg:w-4/5 xl:w-3/5 mx-auto">
           {/* Profile Card */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
             <Card>
@@ -57,14 +104,14 @@ export default function ProfessorProfilePage() {
                 <div className="flex flex-col items-center gap-4">
                   <Avatar className="h-24 w-24">
                     <AvatarImage src={profileData.profilePicture} alt={profileData.name} />
-                    <AvatarFallback>{profileData.name.charAt(0)}</AvatarFallback>
+                    <AvatarFallback>{profileData.name.charAt(0) || "P"}</AvatarFallback>
                   </Avatar>
                   <div className="text-center">
-                    <h2 className="text-xl font-bold">{profileData.name}</h2>
-                    <p className="text-muted-foreground">{profileData.email}</p>
+                    <h2 className="text-xl font-bold">{profileData.name || "Not Available"}</h2>
+                    <p className="text-muted-foreground">{profileData.email || "Not Available"}</p>
                     <div className="mt-1">
                       <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold">
-                        Professor
+                        Professor - {profileData.department || "Not Available"}
                       </span>
                     </div>
                   </div>
@@ -73,15 +120,34 @@ export default function ProfessorProfilePage() {
                 <div className="grid grid-cols-1 gap-4">
                   <div className="space-y-1">
                     <p className="text-sm font-medium text-muted-foreground">Department</p>
-                    <p>{profileData.department}</p>
+                    <p>{profileData.department || "Not Available"}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">College</p>
+                    <p>{profileData.college || "Not Available"}</p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-sm font-medium text-muted-foreground">Contact Number</p>
-                    <p>{profileData.contactNumber}</p>
+                    <p>{profileData.contactNumber || "Not Available"}</p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-sm font-medium text-muted-foreground">Gender</p>
-                    <p>{profileData.gender}</p>
+                    <p>{profileData.gender || "Not Available"}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">Professor Code</p>
+                    <div className="flex items-center gap-2">
+                      <p>{profileData.professorCode || "Not Available"}</p>
+                      {/* {profileData.professorCode && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleCopy(profileData.professorCode)}
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
+                      )} */}
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -90,40 +156,6 @@ export default function ProfessorProfilePage() {
                   Edit Profile
                 </Button>
               </CardFooter>
-            </Card>
-          </motion.div>
-
-          {/* Academic Information */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.1 }}
-          >
-            <Card>
-              <CardHeader>
-                <CardTitle>Academic Information</CardTitle>
-                <CardDescription>Your teaching and research information</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 gap-4">
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-muted-foreground">Subjects Taught</p>
-                    <p>Data Structures, Operating Systems</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-muted-foreground">Classes</p>
-                    <p>CS-3A, CS-4B</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-muted-foreground">Office Hours</p>
-                    <p>Monday, Wednesday: 2:00 PM - 4:00 PM</p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-muted-foreground">Office Location</p>
-                    <p>Block B, Room 205</p>
-                  </div>
-                </div>
-              </CardContent>
             </Card>
           </motion.div>
         </div>
@@ -144,7 +176,7 @@ export default function ProfessorProfilePage() {
                 <div className="flex flex-col items-center gap-4">
                   <Avatar className="h-24 w-24">
                     <AvatarImage src={profileData.profilePicture} alt={profileData.name} />
-                    <AvatarFallback>{profileData.name.charAt(0)}</AvatarFallback>
+                    <AvatarFallback>{profileData.name.charAt(0) || "P"}</AvatarFallback>
                   </Avatar>
                   <div className="flex flex-col items-center gap-2">
                     <Input
@@ -203,6 +235,14 @@ export default function ProfessorProfilePage() {
                         <SelectItem value="Prefer not to say">Prefer not to say</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="college">College</Label>
+                    <Input
+                      id="college"
+                      value={profileData.college}
+                      onChange={(e) => setProfileData({ ...profileData, college: e.target.value })}
+                    />
                   </div>
                 </div>
               </CardContent>

@@ -64,9 +64,9 @@ export default function ProfessorDashboard() {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Professor Dashboard</h1>
-          <p className="text-muted-foreground">
+          {/* <p className="text-muted-foreground">
             Welcome back, Prof. Michael! Manage approved attendance requests here.
-          </p>
+          </p> */}
         </div>
 
         {/* Stats Card */}
@@ -191,11 +191,11 @@ export default function ProfessorDashboard() {
                           </div>
 
                           <div className="flex items-center gap-2">
-                            <Button variant="outline" size="sm" asChild>
+                            {/* <Button variant="outline" size="sm" asChild>
                               <a href={request.fileUrl} target="_blank" rel="noopener noreferrer">
                                 View Document
                               </a>
-                            </Button>
+                            </Button> */}
 
                             <Button
                               variant="default"
@@ -203,7 +203,7 @@ export default function ProfessorDashboard() {
                               className="gap-1"
                               onClick={() => handleGrantAttendance(request.id)}
                             >
-                              <Check className="h-4 w-4" /> Grant Attendance
+                              <Check className="h-4 w-4" /> Attendance Granted
                             </Button>
                           </div>
                         </div>
