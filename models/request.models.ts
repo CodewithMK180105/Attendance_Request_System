@@ -20,6 +20,7 @@ interface AttendanceRequest extends Document {
     reasonForAbsence: string;
   };
   supportingDocument: string; // File URL or path (for storage, like on a cloud service)
+  status: 'pending' | 'approved' | 'rejected';
 }
 
 // Create the Attendance Request schema
@@ -43,6 +44,11 @@ const attendanceRequestSchema: Schema = new Schema(
       reasonForAbsence: { type: String, required: true },
     },
     supportingDocument: { type: String },
+    status: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending',
+    },
   },
   {
     timestamps: true, // Adds createdAt and updatedAt fields

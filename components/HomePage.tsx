@@ -56,7 +56,7 @@ export default function Home({ isLoggedIn, userRole }: HomeProps) {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.4 }}
               >
-                <Link href="/login">
+                <Link href={!isLoggedIn? "/login": `/dashboard/${userRole}`}>
                   <Button size="lg" className="mr-4">
                     Get Started <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
