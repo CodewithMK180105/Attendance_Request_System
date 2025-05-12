@@ -124,11 +124,47 @@ export default function SignupPage() {
     }
 
     try {
+      // 1. Send sign-up data
       const response = await axios.post("/api/sign-up", payload);
       const data = response.data;
       if (data.success) {
         toast({ title: "Success", description: data.message });
-        router.push("/login");
+
+        // 2. Fetch the verification code
+        const codeResponse = await axios.get(`/api/get-verification-code?email=${payload.email}`);
+        if (!codeResponse.data.success) {
+          toast({
+            title: "Error",
+            description: "Issue in sending Verification Code to fetch verification code",
+            variant: "destructive",
+          });
+          return;
+        }
+        const verificationCode = codeResponse.data.verifyCode;
+
+
+        // 3. Now send the verification email
+        const emailResponse = await axios.post("/api/send-email", {
+          name: payload.name,
+          email: payload.email,
+          role: payload.role, // make sure role is part of your signup form
+          verificationCode: verificationCode, // you must get this from backend or generate here
+        });
+
+        if (emailResponse.data.success) {
+          toast({
+            title: "Verification email sent",
+            description: "Check your inbox for the code.",
+          });
+          router.push("/login");
+        } else {
+          toast({
+            title: "Email Error",
+            description: "Could not send verification email.",
+            variant: "destructive",
+          });
+        }
+        
       } else {
         toast({ title: "Error", description: data.message, variant: "destructive" });
       }

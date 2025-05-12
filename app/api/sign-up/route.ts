@@ -35,11 +35,27 @@ export async function POST(request: NextRequest) {
 
     // Check for existing email
     const existingUser = await UserModel.findOne({ email });
-    if (existingUser) {
+    if (existingUser && existingUser.isVerified) {
       return NextResponse.json(
         { success: false, message: "Email already exists" },
         { status: 409 }
       );
+    }
+
+    const verifyCode= Math.floor(100000+ Math.random()*900000).toString();
+    
+    // Check for existing unverified email
+    if(existingUser){ // this confirms that the user is not verified
+      const hashedPassword= await bcrypt.hash(password, 10);
+      existingUser.password=hashedPassword;
+      existingUser.verifyCode=verifyCode;
+      existingUser.verifyCodeExpiry=new Date(Date.now()+ 3600000);
+      await existingUser.save();
+
+      return Response.json({
+        success: true,
+        message: "User registered successfully, Please verify your email"
+      }, {status: 201});
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -77,11 +93,14 @@ export async function POST(request: NextRequest) {
         role,
         studentCode: newStudentCode,
         professorCode: newProfessorCode,
+        isVerified: false,
+        verifyCode,
+        verifyCodeExpiry: new Date(Date.now() + 3600000), // 1 hour expiry
       });
 
       await newUser.save();
       return NextResponse.json(
-        { success: true, message: "HOD registered successfully" },
+        { success: true, message: "HOD registered successfully, Please verify your email" },
         { status: 201 }
       );
     } else if (role === "professor") {
@@ -111,11 +130,14 @@ export async function POST(request: NextRequest) {
         profilePicture,
         role,
         professorCode,
+        isVerified: false,
+        verifyCode,
+        verifyCodeExpiry: new Date(Date.now() + 3600000), // 1 hour expiry
       });
 
       await newUser.save();
       return NextResponse.json(
-        { success: true, message: "Professor registered successfully" },
+        { success: true, message: "Professor registered successfully, Please verify your email" },
         { status: 201 }
       );
     } else if (role === "student") {
@@ -155,11 +177,14 @@ export async function POST(request: NextRequest) {
         profilePicture,
         role,
         studentCode,
+        isVerified: false,
+        verifyCode,
+        verifyCodeExpiry: new Date(Date.now() + 3600000), // 1 hour expiry
       });
 
       await newUser.save();
       return NextResponse.json(
-        { success: true, message: "Student registered successfully" },
+        { success: true, message: "Student registered successfully, Please verify your email" },
         { status: 201 }
       );
     }

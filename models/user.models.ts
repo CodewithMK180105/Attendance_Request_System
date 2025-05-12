@@ -23,6 +23,9 @@ export interface IUser extends Document {
   professorCode?: string;
   createdAt?: Date;
   updatedAt?: Date;
+  verifyCode: string,
+  verifyCodeExpiry: Date,
+  isVerified?: boolean;
 }
 
 // Create the user schema
@@ -58,6 +61,18 @@ const userSchema: Schema<IUser> = new Schema(
     },
     studentCode: { type: String },
     professorCode: { type: String },
+    verifyCode: {
+      type: String,
+      required: [true, "Verify Code is Required"],
+    },
+    verifyCodeExpiry: {
+      type: Date,
+      required: [true, "Verify Code Expiry is Required"],
+    },
+    isVerified: {
+      type: Boolean,
+      default: false
+    },
   },
   {
     timestamps: true,
