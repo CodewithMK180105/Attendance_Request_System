@@ -141,11 +141,11 @@ export default function HodProfilePage() {
                   </div>
                 </div>
               </CardContent>
-              <CardFooter>
+              {/* <CardFooter>
                 <Button className="w-full" onClick={() => setIsEditing(true)}>
                   Edit Profile
                 </Button>
-              </CardFooter>
+              </CardFooter> */}
             </Card>
           </motion.div>
 

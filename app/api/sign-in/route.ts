@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { email, password, role } = body;
 
-    console.log('API: Login attempt:', { email, role });
+    // console.log('API: Login attempt:', { email, role });
 
     // Basic validation
     if (!email || !password || !role) {
@@ -34,8 +34,8 @@ export async function POST(req: NextRequest) {
 
     // Check user
     const user: IUser | null = await UserModel.findOne({ email });
-    if (!user) {
-      console.log('API: No user found for email:', email);
+    if (!user || user.isVerified===false) {
+      // console.log('API: No user found for email:', email);
       return NextResponse.json(
         { success: false, message: 'No user found with this email' },
         { status: 401 }
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (user.role !== role) {
-      console.log('API: Role mismatch: Expected', role, 'but user has', user.role);
+      // console.log('API: Role mismatch: Expected', role, 'but user has', user.role);
       return NextResponse.json(
         {
           success: false,
@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
 
     const isPasswordCorrect = await bcrypt.compare(password, user.password);
     if (!isPasswordCorrect) {
-      console.log('API: Invalid password for email:', email);
+      // console.log('API: Invalid password for email:', email);
       return NextResponse.json(
         { success: false, message: 'Invalid password' },
         { status: 401 }
@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
     });
     
 
-    console.log('API: Token generated for user:', { email, role });
+    // console.log('API: Token generated for user:', { email, role });
 
     const res = NextResponse.json({
       success: true,
@@ -88,10 +88,10 @@ export async function POST(req: NextRequest) {
       maxAge: 60 * 60 * 24 * 7, // 7 days
     });
 
-    console.log('API: Cookie set: auth_token, Secure:', process.env.NODE_ENV === 'production', 'NODE_ENV:', process.env.NODE_ENV);
+    // console.log('API: Cookie set: auth_token, Secure:', process.env.NODE_ENV === 'production', 'NODE_ENV:', process.env.NODE_ENV);
     return res;
   } catch (error) {
-    console.error('API: Login error:', error);
+    // console.error('API: Login error:', error);
     return NextResponse.json(
       { success: false, message: 'Internal Server Error' },
       { status: 500 }

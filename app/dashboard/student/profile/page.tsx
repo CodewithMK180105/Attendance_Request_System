@@ -192,11 +192,11 @@ export default function ProfilePage() {
                       </div>
                     </div>
                   </CardContent>
-                  <CardFooter>
+                  {/* <CardFooter>
                     <Button className="w-full" onClick={() => setIsEditing(true)}>
                       Edit Profile
                     </Button>
-                  </CardFooter>
+                  </CardFooter> */}
                 </Card>
               </motion.div>
               <motion.div

@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
 
     // Check for existing email
     const existingUser = await UserModel.findOne({ email });
-    if (existingUser && existingUser.isVerified) {
+    if (existingUser && existingUser.isVerified===true) {
       return NextResponse.json(
         { success: false, message: "Email already exists" },
         { status: 409 }
@@ -48,8 +48,26 @@ export async function POST(request: NextRequest) {
     if(existingUser){ // this confirms that the user is not verified
       const hashedPassword= await bcrypt.hash(password, 10);
       existingUser.password=hashedPassword;
+      existingUser.name=name;
+      existingUser.role=role;
+      existingUser.college=college;
+      existingUser.department=department;
+      existingUser.contactNumber=contactNumber;
+      existingUser.gender=gender;
       existingUser.verifyCode=verifyCode;
       existingUser.verifyCodeExpiry=new Date(Date.now()+ 3600000);
+
+
+      if(role=== "student") {
+        existingUser.rollNo=rollNo;
+        existingUser.division=division;
+        existingUser.studentCode=studentCode;
+      }
+      
+      if(role=== "professor") {
+        existingUser.professorCode=professorCode;
+      }
+
       await existingUser.save();
 
       return Response.json({

@@ -156,7 +156,7 @@ export default function SignupPage() {
             title: "Verification email sent",
             description: "Check your inbox for the code.",
           });
-          router.push("/login");
+          router.replace(`verify/${encodeURIComponent(payload.email)}`);
         } else {
           toast({
             title: "Email Error",
