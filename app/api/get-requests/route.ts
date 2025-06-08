@@ -3,11 +3,16 @@ import dbConnect from '@/lib/dbConnect';
 import AttendanceRequestModel from '@/models/request.models';
 
 // GET /api/attendance-requests
-export async function GET() {
+export async function GET(req: Request) {
   try {
     await dbConnect();
 
-    const requests = await AttendanceRequestModel.find().sort({ createdAt: 1 });
+    const college = req.headers.get('x-college');
+    const department = req.headers.get('x-department');
+
+    console.log('Fetching attendance requests for:', { college, department });
+
+    const requests = await AttendanceRequestModel.find({college, department}).sort({ createdAt: 1 });
 
     return NextResponse.json(
       { success: true, data: requests },

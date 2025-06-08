@@ -184,7 +184,7 @@ export default function HodProfilePage() {
         </div>
 
         {/* Edit Profile Card */}
-        {isEditing && (
+        {/* {isEditing && (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -277,7 +277,7 @@ export default function HodProfilePage() {
               </CardFooter>
             </Card>
           </motion.div>
-        )}
+        )} */}
       </div>
     </DashboardLayout>
   )

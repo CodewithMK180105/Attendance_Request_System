@@ -34,6 +34,8 @@ export async function POST(req: NextRequest) {
     const subject = formData.get("subject")?.toString();
     const professor = formData.get("professor")?.toString();
     const reasonForAbsence = formData.get("reasonForAbsence")?.toString();
+    const college = formData.get("college")?.toString();
+    const department = formData.get("department")?.toString();
     const supportingDocument = formData.get("supportingDocument") as File | null;
 
     // Check for missing required fields
@@ -49,6 +51,8 @@ export async function POST(req: NextRequest) {
       subject,
       professor,
       reasonForAbsence,
+      college,
+      department,
     };
 
     for (const [key, value] of Object.entries(requiredFields)) {
@@ -115,6 +119,8 @@ export async function POST(req: NextRequest) {
       },
       supportingDocument: documentUrl,
       status: "pending",
+      college,
+      department,
     });
 
     await request.save();

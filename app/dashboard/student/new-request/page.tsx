@@ -57,6 +57,8 @@ export default function NewRequestPage() {
       formData.append("subject", subjectRef.current?.value || "");
       formData.append("professor", professorRef.current?.value || "");
       formData.append("reasonForAbsence", reasonRef.current?.value || "");
+      formData.append("college", user?.college || "");
+      formData.append("department", user?.department || "");
       if (file) {
         formData.append("supportingDocument", file);
       }

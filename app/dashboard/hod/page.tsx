@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import Link from "next/link"
+import { useUser } from "@/context/UserContext"
 
 export default function HodDashboard() {
   const { toast } = useToast()
@@ -23,27 +24,49 @@ export default function HodDashboard() {
   const [classFilter, setClassFilter] = useState("all")
   const [subjectFilter, setSubjectFilter] = useState("all")
 
+  const {user}= useUser();
+  const [profileData, setProfileData] = useState(user || {
+      name: "",
+      email: "",
+      department: "",
+      college: "",
+      contactNumber: "",
+      gender: "",
+      profilePicture: "",
+      role: "hod",
+      studentCode: "",
+      professorCode: "",
+  })
+
   useEffect(() => {
-    const fetchRequests = async () => {
-      try {
-        const res = await fetch("/api/get-requests")
-        const json = await res.json()
+  if (!user || !user.college || !user.department) return;
 
-        console.log("Fetched Requests:", json)
+  console.log("Fetching requests for user:", user)
 
-        if (json.success) {
-          
-          setAllRequests(json.data)
-        }
-      } catch (error) {
-        console.error("Failed to fetch requests:", error)
-      } finally {
-        setLoading(false)
+  const fetchRequests = async () => {
+    try {
+      const res = await fetch("/api/get-requests", {
+        method: "GET",
+        headers: {
+          "x-college": user.college,
+          "x-department": user.department,
+        },
+      });
+      const json = await res.json();
+      console.log("Fetched requests:", json)
+      if (json.success) {
+        setAllRequests(json.data);
       }
+    } catch (error) {
+      console.error("Failed to fetch requests:", error);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    fetchRequests()
-  }, [])
+  fetchRequests();
+}, [user]);
+
 
   const filteredRequests = allRequests
     .filter((request) => {
@@ -85,7 +108,7 @@ export default function HodDashboard() {
 
     const data = await res.json();
     if (data.success) {
-      toast({ title: `Request ${status}` });
+      toast({ title: `Request ${status}, Reload to see changes` });
     } else {
       toast({ title: "Error", description: data.message });
     }
@@ -208,7 +231,7 @@ export default function HodDashboard() {
                               </p>
                               <p className="text-sm text-muted-foreground">
                                 {request?.classInfo?.subject} • {request?.classInfo?.professor} •{" "}
-                                {request?.event?.eventDate}
+                                {request?.event?.eventDate?.slice(0, 10)} •{" "} {request?.event?.lectureTime}
                               </p>
                             </div>
 

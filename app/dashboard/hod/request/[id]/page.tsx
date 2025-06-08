@@ -36,7 +36,7 @@ export default function HodRequestDetailsPage() {
   const handleApprove = () => {
     // Simulate API call
     toast({
-      title: "Request Approved",
+      title: "Request Approved, Reload to see changes",
       description: "The attendance request has been approved.",
     })
     setRequest({ ...request, status: "Approved" })
@@ -45,7 +45,7 @@ export default function HodRequestDetailsPage() {
   const handleReject = () => {
     // Simulate API call
     toast({
-      title: "Request Rejected",
+      title: "Request Rejected, Reload to see changes",
       description: "The attendance request has been rejected.",
     })
     setRequest({ ...request, status: "Rejected" })
@@ -233,9 +233,9 @@ export default function HodRequestDetailsPage() {
                       <div>
                         <p className="font-medium">
                           {request.status === "Rejected"
-                            ? "Request Rejected"
+                            ? "Request Rejected, Reload to see changes"
                             : request.status === "Approved"
-                              ? "Request Approved"
+                              ? "Request Approved, Reload to see changes"
                               : "Attendance Granted"}
                         </p>
                         <p className="text-sm text-muted-foreground">

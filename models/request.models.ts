@@ -49,6 +49,8 @@ const attendanceRequestSchema: Schema = new Schema(
       enum: ['pending', 'approved', 'rejected'],
       default: 'pending',
     },
+    college: { type: String, required: true }, // Added college field
+    department: { type: String, required: true }, // Added department field
   },
   {
     timestamps: true, // Adds createdAt and updatedAt fields
