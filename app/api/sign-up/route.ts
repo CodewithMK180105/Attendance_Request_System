@@ -2,7 +2,7 @@ import dbConnect from "@/lib/dbConnect";
 import UserModel from "@/models/user.models";
 import { NextRequest, NextResponse } from "next/server";
 import { generateClassCode } from "@/lib/codeGeneration";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 
 export async function POST(request: NextRequest) {
   await dbConnect();
