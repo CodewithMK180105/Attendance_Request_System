@@ -62,10 +62,16 @@ export async function POST(request: NextRequest) {
         existingUser.rollNo=rollNo;
         existingUser.division=division;
         existingUser.studentCode=studentCode;
+        existingUser.userId=userId;
       }
       
       if(role=== "professor") {
         existingUser.professorCode=professorCode;
+      }
+
+      if(role=== "hod") {
+        existingUser.studentCode=generateClassCode();
+        existingUser.professorCode=generateClassCode();
       }
 
       await existingUser.save();
