@@ -52,3 +52,12 @@ This portal replaces the manual system with a streamlined digital process involv
 
 ### HOD Panel
 ![HOD Panel](./public/screenshots/hod-panel.png)
+
+---
+
+## 👨‍💻 Author
+
+**Manishkumar Gupta**  
+Student @ Dwarkadas J. Sanghvi College of Engineering  
+🔗 [LinkedIn](https://www.linkedin.com/in/manishkumar-gupta-1139642b5) 
+🔗 [Live Link](https://attendease-eight.vercel.app/) 
