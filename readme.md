@@ -36,6 +36,7 @@ This portal replaces the manual system with a streamlined digital process involv
 | UI Library   | ShadCN UI          |
 | Animations   | Framer Motion      |
 | File Upload  | Cloudinary         |
+| Verification | Nodemailer         |
 | Database     | MongoDB            |
 | API Layer    | Next.js API Routes |
 | Deployment   | Vercel             |
