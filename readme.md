@@ -45,10 +45,10 @@ This portal replaces the manual system with a streamlined digital process involv
 ## 🖼️ Screenshots
 
 ### Student Dashboard
-![Student Dashboard](/screenshots/student-dashboard.png)
+![Student Dashboard](./public/screenshots/student-dashboard.png)
 
 ### Class Teacher Panel
-![Class Teacher Panel](/screenshots/teacher-panel.png)
+![Class Teacher Panel](./public/screenshots/teacher-panel.png)
 
 ### HOD Panel
-![HOD Panel](/screenshots/hod-panel.png)
+![HOD Panel](./public/screenshots/hod-panel.png)
