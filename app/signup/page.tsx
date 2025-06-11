@@ -72,7 +72,7 @@ export default function SignupPage() {
         setDepartment("");
         setCollege("");
         setIsCodeValid(false);
-        toast({ title: "Error", description: "Failed to validate code", variant: "destructive" });
+        toast({ title: "Error", description: "Failed to validate code, Make sure to select Proper Role", variant: "destructive" });
       }
     };
 
@@ -384,7 +384,7 @@ export default function SignupPage() {
                   </div>
                 </div>
 
-                <div className="space-y-4">
+                {/* <div className="space-y-4">
                   <h3 className="text-lg font-medium">Profile Picture (Optional)</h3>
                   <div className="border rounded-md p-4">
                     <div className="flex flex-col items-center justify-center gap-2">
@@ -414,7 +414,7 @@ export default function SignupPage() {
                   <p className="text-xs text-muted-foreground">
                     Accepted file types: JPG, PNG (Max size: 5MB)
                   </p>
-                </div>
+                </div> */}
 
                 <Button
                   type="submit"

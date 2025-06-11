@@ -1,7 +1,7 @@
 "use client";
 
 import type React from "react";
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { motion } from "framer-motion";
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -19,6 +20,11 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { TimeField } from "@/components/ui/time-field";
 import { useUser } from "@/context/UserContext";
+
+interface Professor {
+  name: string;
+  email: string;
+}
 
 export default function NewRequestPage() {
   const router = useRouter();
@@ -28,11 +34,41 @@ export default function NewRequestPage() {
   const [date, setDate] = useState<Date>();
   const [time, setTime] = useState<string>("10:00");
   const [file, setFile] = useState<File | null>(null);
+  const [professors, setProfessors] = useState<Professor[]>([]);
+  const [selectedProfessorEmail, setSelectedProfessorEmail] = useState<string>("");
   const eventNameRef = useRef<HTMLInputElement>(null);
   const eventLocationRef = useRef<HTMLInputElement>(null);
   const subjectRef = useRef<HTMLInputElement>(null);
-  const professorRef = useRef<HTMLInputElement>(null);
   const reasonRef = useRef<HTMLTextAreaElement>(null);
+
+  // Fetch professors from MongoDB
+  useEffect(() => {
+    if (user?.college && user?.department) {
+      const fetchProfessors = async () => {
+        try {
+          const response = await axios.get<{ success: boolean; data: Professor[] }>("/api/get-professors", {
+            headers: {
+              "x-college": user.college,
+              "x-department": user.department,
+            },
+          });
+          if (response.data.success) {
+            setProfessors(response.data.data);
+            console.log("Fetched professors:", response.data.data);
+          } else {
+            throw new Error("Failed to fetch professors");
+          }
+        } catch (error: any) {
+          toast({
+            title: "Error",
+            description: error.message || "Failed to fetch professors",
+            variant: "destructive",
+          });
+        }
+      };
+      fetchProfessors();
+    }
+  }, [user, toast]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -55,7 +91,7 @@ export default function NewRequestPage() {
       formData.append("eventDate", date ? format(date, "yyyy-MM-dd") : "");
       formData.append("lectureTime", time);
       formData.append("subject", subjectRef.current?.value || "");
-      formData.append("professor", professorRef.current?.value || "");
+      formData.append("professor", selectedProfessorEmail); // Store email
       formData.append("reasonForAbsence", reasonRef.current?.value || "");
       formData.append("college", user?.college || "");
       formData.append("department", user?.department || "");
@@ -181,7 +217,18 @@ export default function NewRequestPage() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="professor">Professor</Label>
-                      <Input id="professor" placeholder="Enter professor name" ref={professorRef} required />
+                      <Select value={selectedProfessorEmail} onValueChange={setSelectedProfessorEmail} required>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a professor" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {professors.map((professor) => (
+                            <SelectItem key={professor.email} value={professor.email}>
+                              {professor.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                   <div className="space-y-2">
